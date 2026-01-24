@@ -305,47 +305,7 @@ const CustomCard = component((props) => {
 * **TypeScript Coverage**: 100%
 
 ---
-
-## 🔗 **Integration**
-
-### **With Vader.js**
-```javascript
-import { render } from 'vaderjs';
-import App from './App';
-
-render(createElement(App, null), document.getElementById('root'));
-```
-
-### **With Tailwind CSS**
-```javascript
-// tailwind.config.js
-module.exports = {
-  content: ['./**/*.js'],
-  plugins: [require('daisyui')],
-  daisyui: {
-    themes: ['light', 'dark', 'cupcake', 'synthwave'],
-  },
-};
-```
-
-### **With CDN**
-```html
-<!DOCTYPE html>
-<html data-theme="dark">
-<head>
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.0.0/dist/full.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/vaderjs"></script>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module">
-    // Your VaderUI app here
-  </script>
-</body>
-</html>
-```
-
----
+  
 
 ## 📄 **License**
 
@@ -392,3 +352,4 @@ Found a bug or have a feature request?
 
 
 **Built with ❤️ for the Vader.js community**
+
