@@ -31,6 +31,15 @@ export default {
 ```
 ---
 
+## Required CSS File
+Ensure you have a `root.css` in the root of your project directory so tailwind knows how to build
+
+```css
+/*root.css*/
+@import "tailwindcss";
+@plugin "daisyui";
+```
+
 ## 🔌 **Quick Setup**
 
  
@@ -352,4 +361,5 @@ Found a bug or have a feature request?
 
 
 **Built with ❤️ for the Vader.js community**
+
 
