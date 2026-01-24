@@ -9,8 +9,7 @@ A comprehensive DaisyUI component library built for **Vader.js** — no React, n
 * **22+ DaisyUI Components** - Complete coverage of DaisyUI's design system
 * **Zero React Dependency** - Pure Vader.js implementation
 * **Vader-first APIs** - Built specifically for Vader's reactive system
-* **Tree-shakable** - Import only what you need
-* **Works with DaisyUI CDN** - Just add the CSS and go
+* **Tree-shakable** - Import only what you need 
 * **TypeScript Ready** - Full type definitions included
 * **Lightweight** - Minimal runtime overhead
 
@@ -390,5 +389,6 @@ Found a bug or have a feature request?
 - **Issues**: GitHub issue tracker
 
 ---
+
 
 **Built with ❤️ for the Vader.js community**
