@@ -1,9 +1,79 @@
-import { VaderPlugin } from "vaderjs/plugins";
+//@ts-nocheck
 import path from "path";
 import fs from "fs";
 import { spawn } from "child_process";
-
 const PROJECT_ROOT = process.cwd();
+
+/* --------------------------- Platform Detection --------------------------- */
+
+interface ProjectInfo {
+  isVaderJS: boolean;
+  isVaderNative: boolean;
+  platform: "vaderjs" | "vaderjs-native" | "unknown";
+  packageJson: any;
+}
+
+function detectPlatform(): ProjectInfo {
+  const packageJsonPath = path.join(PROJECT_ROOT, "package.json");
+  
+  if (!fs.existsSync(packageJsonPath)) {
+    return {
+      isVaderJS: false,
+      isVaderNative: false,
+      platform: "unknown",
+      packageJson: {}
+    };
+  }
+  
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  const deps = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies
+  };
+  
+  const isVaderJS = "vaderjs" in deps;
+  const isVaderNative = "vaderjs-native" in deps;
+  
+  let platform: "vaderjs" | "vaderjs-native" | "unknown" = "unknown";
+  if (isVaderJS && !isVaderNative) {
+    platform = "vaderjs";
+  } else if (isVaderNative && !isVaderJS) {
+    platform = "vaderjs-native";
+  } else if (isVaderJS && isVaderNative) {
+    // Both installed, prioritize native for native projects
+    platform = "vaderjs-native";
+  }
+  
+  return {
+    isVaderJS,
+    isVaderNative,
+    platform,
+    packageJson
+  };
+}
+
+/* --------------------------- Dynamic Import --------------------------- */
+
+async function getVaderPlugin(): Promise<any> {
+  const { platform } = detectPlatform();
+  
+  if (platform === "vaderjs-native") {
+    try {
+      //@ts-ignore
+      return await import("vaderjs-native/plugins");
+    } catch (e) {
+      console.warn("Failed to import from vaderjs-native/plugins, falling back to vaderjs/plugins");
+    }
+  }
+  
+  // Default to vaderjs
+  try {
+     //@ts-ignore
+    return await import("vaderjs/plugins");
+  } catch (e) {
+    throw new Error(`Cannot find Vader.js plugins module. Install either vaderjs or vaderjs-native.`);
+  }
+}
 
 /* --------------------------- utils --------------------------- */
 
@@ -27,17 +97,18 @@ function tailwindInstalled(): boolean {
  */
 function ensureStyles(inputPath: string) {
   const outputPath = path.join(PROJECT_ROOT, "public/styles.css");
-
+  console.log(`Ensuring styles: input=${inputPath}, output=${outputPath}`);
   if (!fs.existsSync(outputPath)) {
-    if (!fs.existsSync(inputPath)) {
+    
+    fs.copyFileSync(inputPath, outputPath);
+  }
+   if (!fs.existsSync(inputPath)) {
       fs.writeFileSync(
         inputPath,
-        `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n@import "daisyui";`
+        `@import "tailwindcss"; \n @plugin "daisyui";`
       );
       console.log(`Created default root.css at ${inputPath}`);
     }
-    fs.copyFileSync(inputPath, outputPath);
-  }
 }
 
 /**
@@ -64,7 +135,7 @@ function ensureTailwindConfig() {
 async function runTailwind(input: string, output: string) {
   return new Promise<void>((resolve, reject) => {
     const proc = spawn("bunx", ["tailwindcss", "-i", input, "-o", output], { stdio: "inherit" });
-    proc.on("close", (code) => {
+    proc.on("close", (code: number) => {
       if (code !== 0) reject(new Error(`Tailwind exited with ${code}`));
       else resolve();
     });
@@ -91,40 +162,48 @@ async function autoInstallDeps() {
   console.log("✅ Dependencies installed.");
 }
 
-/* --------------------------- plugin --------------------------- */
+/* --------------------------- Plugin Factory --------------------------- */
 
-const plugin: VaderPlugin = {
-  name: "Vader Aria",
-  version: "0.1.0",
-  description: "Tailwind + DaisyUI integration for VaderJS",
+async function createPlugin() {
+  const { platform } = detectPlatform();
+  const { VaderPlugin } = await getVaderPlugin();
+  
+  const plugin: InstanceType<typeof VaderPlugin> = {
+    name: "Vader Aria",
+    version: "0.1.0",
+    description: `Tailwind + DaisyUI integration for ${platform}`,
 
-  async onBuildStart(api) {
-    const rootCss = path.join(PROJECT_ROOT, "root.css");
+    async onBuildStart(api: any) {
+      const rootCss = path.join(PROJECT_ROOT, "root.css");
 
-    // Ensure root CSS exists
-    ensureStyles(rootCss);
+      // Ensure root CSS exists
+      ensureStyles(rootCss);
 
-    // Auto-install deps if Tailwind is not available
-    if (!tailwindInstalled()) {
-      await autoInstallDeps();
-    }
+      // Auto-install deps if Tailwind is not available
+      if (!tailwindInstalled()) {
+        await autoInstallDeps();
+      }
 
-    // Ensure tailwind.config.js exists
-    ensureTailwindConfig();
+      // Ensure tailwind.config.js exists
+      ensureTailwindConfig();
 
-    // Run Tailwind build
-    console.log("🚀 Running TailwindCSS build...");
-    const output = path.join(PROJECT_ROOT, "public/styles.css");
-    await runTailwind(rootCss, output);
+      // Run Tailwind build
+      console.log(`🚀 Running TailwindCSS build for ${platform}...`);
+      const output = path.join(PROJECT_ROOT, "public/styles.css"); 
+      await runTailwind(rootCss, output);
 
-    // Inject link into HTML
-    api.injectHTML(`<link rel="stylesheet" href="/styles.css" />`);
-    console.log("✅ TailwindCSS + DaisyUI loaded");
-  },
+      // Inject link into HTML
+      api.injectHTML(`<link rel="stylesheet" href="/styles.css" />`);
+      console.log(`✅ TailwindCSS + DaisyUI loaded for ${platform}`);
+    },
 
-  onBuildFinish(api) {
-    // Optional cleanup
-  },
-};
+    onBuildFinish(api: any) {
+      // Optional cleanup
+    },
+  };
 
-export default plugin;
+  return plugin;
+}
+
+// Export as default function that creates the plugin
+export default await createPlugin();
