@@ -132,7 +132,7 @@ export const Modal = component((props: ModalProps) => {
     createElement(
       "div",
       {
-        className: `modal-box ${size} relative`,
+        className: `modal-box ${size} relative bg-transparent border-none`,
         ref: (el: HTMLDivElement) => (modalRef = el),
       },
       title && createElement("h3", { className: "font-bold text-lg" }, title),
