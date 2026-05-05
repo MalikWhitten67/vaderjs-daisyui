@@ -1,5 +1,5 @@
-import { useState, useEffect, component, createElement, VNode } from "vaderjs";
-import Button from "../Button";
+const { useState, useEffect, component, createElement  } = window.Vader
+import Button from "../Button/index";
 
 export function useModal(initialOpen = false) {
   const [isOpen, setIsOpen] = useState(initialOpen);
@@ -13,7 +13,8 @@ interface ModalProps {
   isOpen: boolean;
   onClose?: () => void;
   title?: string;
-  children?: VNode | VNode[] | string;
+  children?:VNode |VNode[] | string;
+  modalid?: string; // for accessibility and testing
   size?: string; // DaisyUI sizes: w-11/12 max-w-md etc.
   placement?: "top" | "middle" | "bottom";
   horizontal?: "start" | "center" | "end"; // horizontal alignment
@@ -22,7 +23,7 @@ interface ModalProps {
 }
 
 interface ModalActionProps {
-  children: VNode | VNode[] | string;
+  children:VNode |VNode[] | string;
   onClick?: () => void;
   closeModal?: boolean;
   close?: () => void;
@@ -30,6 +31,7 @@ interface ModalActionProps {
 
 // Utility to get focusable elements inside the modal
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  //@ts-ignore
   return Array.from(
     container.querySelectorAll(
       'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
@@ -48,6 +50,7 @@ export const Modal = component((props: ModalProps) => {
     horizontal = "center",
     backdrop = true,
     openClass = "",
+    modalid = "vader-modal",
   } = props;
 
   let modalRef: HTMLDivElement | null = null;
@@ -116,6 +119,7 @@ export const Modal = component((props: ModalProps) => {
     {
       className: `modal modal-open ${placementClass} ${openClass}`,
       "aria-modal": "true",
+      id: modalid,
       role: "dialog",
     },
     backdrop &&
