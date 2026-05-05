@@ -14,6 +14,7 @@ interface ModalProps {
   onClose?: () => void;
   title?: string;
   children?:VNode |VNode[] | string;
+  classname?: string; // extra classes for modal-box
   modalid?: string; // for accessibility and testing
   size?: string; // DaisyUI sizes: w-11/12 max-w-md etc.
   placement?: "top" | "middle" | "bottom";
@@ -51,6 +52,7 @@ export const Modal = component((props: ModalProps) => {
     backdrop = true,
     openClass = "",
     modalid = "vader-modal",
+    classname = "",
   } = props;
 
   let modalRef: HTMLDivElement | null = null;
@@ -117,7 +119,7 @@ export const Modal = component((props: ModalProps) => {
   return createElement(
     "div",
     {
-      className: `modal modal-open ${placementClass} ${openClass}`,
+      className: `modal modal-open ${placementClass} ${openClass} ${horizontalClass} ${classname}`,
       "aria-modal": "true",
       id: modalid,
       role: "dialog",
